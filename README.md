@@ -19,14 +19,14 @@
   </a>
 </p>
 
-## Background
-`fossa` analyzes complex codebases to generate dependency reports and license notices.  By leveraging existing build environments, it can generate fast and highly-accurate results.
+## Overview
+`fossa` analyzes complex codebases to generate dependency reports and license notices. By integrating with your production build system, it generates extremely accurate results.
 
 **Features:**
 
 - Supports [over 20+ languages & environments](docs/how-it-works.md) (JavaScript, Java, Ruby, Python, Golang, PHP, .NET, etc...)
-- Auto-configures for monoliths; instantly handles multiple builds in large codebases
-- Fast & portable; a cross-platform binary you can drop into CI or dev machines
+- Auto-configuration for monoliths: detects and configures multiple projects in large codebases
+- Fast & portable: a cross-platform binary you can drop into CI or dev machines
 - Generates offline documentation for license notices & third-party attributions
 - Tests dependencies against license violations, audits and vulnerabilities (coming soon!) by integrating with https://fossa.io
 
@@ -34,9 +34,9 @@
 
 ## Installation
 
-Install on **MacOS (Darwin) or Linux amd6** using `curl`:
+Install on **MacOS (Darwin) or Linux** using `curl`:
 ```bash
-curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
+curl https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
 ```
 
 Install on **Windows** using `cmd.exe`:
@@ -44,7 +44,7 @@ Install on **Windows** using `cmd.exe`:
 @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/fossas/fossa-cli/master/install.ps1'))"
 ```
 
-These commands will execute scripts to fetch and install the latest [Github Release](releases/).
+These commands will execute scripts to fetch and install the latest [Github Release](releases/). You can inspect their sources at [install.sh](https://github.com/fossas/fossa-cli/blob/master/install.sh) and [install.ps1](https://github.com/fossas/fossa-cli/blob/master/install.ps1).
 
 ## Quick Start
 
@@ -186,6 +186,6 @@ If you're in San Francisco, come to our monthly [Open Source Happy Hour](http://
 
 `fossa` is Open Source and licensed under the [MPL-2.0](https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)).
 
-You are free to use `fossa` for commercial or personal purposes.  Enjoy!
+You are free to use `fossa` for commercial or personal purposes. Enjoy!
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffossas%2Ffossa-cli.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffossas%2Ffossa-cli?ref=badge_large)
