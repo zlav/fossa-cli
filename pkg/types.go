@@ -29,6 +29,7 @@ const (
 	Ruby                  // Bundler (https://bundler.io)
 	Scala                 // SBT (https://www.scala-sbt.org)
 	Raw                   // Unsupported languages
+	RawFolder             // A third-party components folder of many Raw modules
 )
 
 // AllTypes enumerates all package types.
