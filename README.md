@@ -19,25 +19,25 @@
   </a>
 </p>
 
-## Background
+## Overview
 
-`fossa` analyzes complex codebases to generate dependency reports and license notices. By leveraging existing build environments, it can generate fast and highly-accurate results.
+`fossa` analyzes complex codebases to generate dependency reports and license notices. By using existing build environments, it can generate extremely accurate results.
 
 **Features:**
 
 - Supports [over 20+ languages & environments](docs/how-it-works.md) (JavaScript, Java, Ruby, Python, Golang, PHP, .NET, etc...)
-- Auto-configures for monoliths; instantly handles multiple builds in large codebases
+- Auto-configures for monoliths; easily handles multiple projects together in large repositories
 - Fast & portable; a cross-platform binary you can drop into CI or dev machines
 - Generates offline documentation for license notices & third-party attributions
-- Tests dependencies against license violations, audits and vulnerabilities (coming soon!) by integrating with https://fossa.io
+- Tests dependencies for license violations and vulnerabilities by integrating with [FOSSA](https://fossa.io)
 
-[Click here to learn more](docs/how-it-works.md) about the reasons and technical details behind this project.
+[Read more](docs/how-it-works.md) about the reasons and technical details behind this project.
 
 ## Installation
 
-Install on **MacOS (Darwin) or Linux amd6** using `curl`:
+Install on **MacOS or Linux** using `curl`:
 ```bash
-curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
+curl https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
 ```
 
 Install on **Windows** using `cmd.exe`:
@@ -45,12 +45,13 @@ Install on **Windows** using `cmd.exe`:
 @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/fossas/fossa-cli/master/install.ps1'))"
 ```
 
-These commands will execute scripts to fetch and install the latest [Github Release](releases/).
+Install **manually** by downloading a release from [GitHub Releases](/fossas/fossa-cli/releases).
 
-## Quick Start
+## Usage
 
-Run `fossa -o` in your repo directory to output a dependency report in JSON:
-```json
+Run `fossa --output` in your repo directory to output a dependency report in JSON:
+```bash
+$ fossa --output
 [
   {
     "Name": "fossa-cli",
@@ -74,13 +75,13 @@ Run `fossa -o` in your repo directory to output a dependency report in JSON:
 ]
 ```
 
-Run `fossa` and provide a [FOSSA API Key](https://docs.fossa.io/docs/api-reference) to get a rich, hosted report:
+Run `fossa` with a [FOSSA API Key](https://fossa.io) to get a full dependency analysis and check for license violations and vulnerabilities:
 
 ```bash
-export FOSSA_API_KEY="YOUR_API_KEY_HERE"
+$ export FOSSA_API_KEY="YOUR_API_KEY_HERE"
 
 # Now, you can just run `fossa`!
-fossa
+$ fossa
 
 # Output:
 # ==========================================================
@@ -90,49 +91,12 @@ fossa
 # ==========================================================
 ```
 
-## Configuration
-
-Initialize configuation and scan for supported modules:
-
-```bash
-fossa init # writes to `.fossa.yml`
-```
-
-This will initialize a `.fossa.yml` file that looks like this:
-
-```yaml
-version: 1
-
-cli:
-  server: https://app.fossa.io
-  project: github.com/fossas/fossa-cli
-
-analyze:
-  modules:
-    - name: fossa-cli
-      path: ./cmd/fossa
-      type: go
-
-# ...
-```
-
-Check out our [User Guide](docs/user-guide.md) to learn about editing this file.
-
-After configuration, you can now preview and upload new results:
-
-```bash
-# Run FOSSA analysis and preview the results we're going to upload
-fossa -o
-
-# Run FOSSA and upload results
-# Going forward, you only need to run this one-liner
-FOSSA_API_KEY=YOUR_API_KEY_HERE fossa
-```
+See the [User Guide](TODO) for the full documentation.
 
 ## Integrating with CI
 
 ### Testing for License Violations
-If you've integrated with https://fossa.io, you can use `fossa test` to fail builds against your FOSSA scan status.
+If you've integrated with [FOSSA](https://fossa.io), you can use `fossa test` to fail builds against your FOSSA scan status.
 
 ```bash
 # Exit with a failing status and dump an issue report to stderr
@@ -164,24 +128,30 @@ FOSSA_API_KEY=YOUR_API_KEY_HERE fossa test
 To generate a license notice with each CI build, you can use the `fossa report` command:
 
 ```bash
-# write a license notice to NOTICE.txt
-fossa report --type licenses > NOTICE.txt
+# Write a license notice to NOTICE.txt
+fossa report licenses > NOTICE.txt
 ```
 
 [See this repo's NOTICE file](NOTICE) for an example.
 
-License data is provided by [https://fossa.io](https://fossa.io)'s 500GB open source registry.
+License data is provided by [FOSSA](https://fossa.io)'s open source registry.
 
-## Reference
+## User Guide
+
 Check out the [User Guide](docs/user-guide.md) for more details.
 
-## Development
+## Contributing
 
-View our [Contribution Guidelines](CONTRIBUTING.md) to get started.
+View our [contribution guidelines](CONTRIBUTING.md) to get started and join our [public Slack channel](https://slack.fossa.io) to meet the rest of the community. If you're in San Francisco, come to our monthly [open source happy hour](http://meetup.fossa.io) to meet us face to face!
 
-Join our public [Slack Channel](https://slack.fossa.io).
+Developers can build from source (with a working Go setup):
 
-If you're in San Francisco, come to our monthly [Open Source Happy Hour](http://meetup.fossa.io) to meet us F2F!
+```bash
+go get -u -v github.com/fossas/fossa-cli/...
+```
+
+Running `make` will also download the tools necessary to do a full build (there are some code generation steps). Note that master is not always stable, please DO NOT build from source unless you're developing or using bleeding-edge features.
+
 
 ## License
 

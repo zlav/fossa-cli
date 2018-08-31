@@ -1,3 +1,44 @@
+
+## Configuration
+
+Initialize configuration and scan for supported modules:
+
+```bash
+fossa init # writes to `.fossa.yml`
+```
+
+This will initialize a `.fossa.yml` file that looks like this:
+
+```yaml
+version: 1
+
+cli:
+  server: https://app.fossa.io
+  project: github.com/fossas/fossa-cli
+
+analyze:
+  modules:
+    - name: fossa-cli
+      path: ./cmd/fossa
+      type: go
+
+# ...
+```
+
+Check out our [User Guide](docs/user-guide.md) to learn about editing this file.
+
+After configuration, you can now preview and upload new results:
+
+```bash
+# Run FOSSA analysis and preview the results we're going to upload
+fossa -o
+
+# Run FOSSA and upload results
+# Going forward, you only need to run this one-liner
+FOSSA_API_KEY=YOUR_API_KEY_HERE fossa
+```
+
+
 # User Guide
 ## Configuration
 
