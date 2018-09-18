@@ -7,6 +7,7 @@ GO_BINDATA="$(BIN)/go-bindata"
 GENNY="$(BIN)/genny"
 GO_JUNIT_REPORT="$(BIN)/go-junit-report"
 GOVERALLS="$(BIN)/goveralls"
+GOLANGCI_LINT="$(BIN)/golangci-lint"
 
 GORELEASER_FLAGS?=--rm-dist
 LDFLAGS:=-ldflags '-extldflags "-static" -X github.com/fossas/fossa-cli/cmd/fossa/version.version=$(shell git rev-parse --abbrev-ref HEAD) -X github.com/fossas/fossa-cli/cmd/fossa/version.commit=$(shell git rev-parse HEAD) -X "github.com/fossas/fossa-cli/cmd/fossa/version.goversion=$(shell go version)" -X github.com/fossas/fossa-cli/cmd/fossa/version.buildType=development'
@@ -28,6 +29,9 @@ $(GO_JUNIT_REPORT):
 
 $(GOVERALLS):
 	[ -f $@ ] || go get -u github.com/mattn/goveralls
+
+$(GOLANGCI_LINT):
+	[ -f $@ ] || go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 
 # Building the CLI.
 .PHONY: build
@@ -73,6 +77,10 @@ install: $(PREFIX)/fossa
 .PHONY: uninstall
 uninstall:
 	rm $(PREFIX)/fossa
+
+.PHONY: lint
+lint: $(GOLANGCI_LINT)
+	golangci-lint run
 
 .PHONY: vendor
 vendor: $(DEP)
