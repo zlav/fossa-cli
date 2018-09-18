@@ -22,7 +22,11 @@ jobs:
             mkdir -p $WORKSPACE
       - restore_cache:
           keys:
-            - v2-gopkg-cache-{{ checksum "Gopkg.lock" }}
+            - v2-gopkg-cache-{{ checksum "Gopkg.lock" }}-{{ checksum "Makefile" }}
+      - run:
+          name: Run linters
+          command: |
+            make lint
       - run:
           name: Compile CLI
           command: |
@@ -32,7 +36,7 @@ jobs:
             # Compile CLI
             make
       - save_cache:
-          key: v1-gopkg-cache-{{ checksum "Gopkg.lock" }}
+          key: v1-gopkg-cache-{{ checksum "Gopkg.lock" }}-{{ checksum "Makefile" }}
           paths:
             - "/go/bin"
             - "/go/pkg"
