@@ -1,29 +1,36 @@
 package test
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/fossas/fossa-cli/cmd/fossa/cmd/test"
 	"github.com/fossas/fossa-cli/config"
+	gock "gopkg.in/h2non/gock.v1"
 )
 
 func TestPublishWrongResponseStatus(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusServiceUnavailable)
+	defer gock.Off()
 
-		if r.Method != "POST" {
-			t.Errorf("Expected ‘POST’ request, got ‘%s’", r.Method)
-		}
+	url := "http://server.com"
+	gock.New(url).
+		Get("/bar").
+		Reply(200).
+		JSON(map[string]string{"foo": "bar"})
 
-		if r.URL.EscapedPath() != "/pub" {
-			t.Errorf("Expected request to ‘/pub’, got ‘%s’", r.URL.EscapedPath())
-		}
-	}))
+	config.BackendEndpoint = url
+	// test.Run(&cli.Context{App:,
+	// flagSet: ,
+	// parentContext: ,})
 
-	defer ts.Close()
-
-	config.BackendEndpoint = ts.URL
-	test.Do()
+	// stdout, stderr, err := exec.Run(exec.Cmd{
+	// 	Name: "fossa",
+	// 	Argv: append([]string{"test", "-c="}),
+	// })
+	// fmt.Printf("%+v\n", stdout)
+	// fmt.Printf("%+v", stderr)
+	// if err != nil && stdout == "" {
+	// 	if strings.Contains(stderr, "build constraints exclude all Go files") {
+	// 		fmt.Println(errors.New("bad OS/architecture target"))
+	// 	}
+	// 	fmt.Println("error running fossa test")
+	// }
 }

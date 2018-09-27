@@ -34,6 +34,7 @@ var Cmd = cli.Command{
 var _ cli.ActionFunc = Run
 
 func Run(ctx *cli.Context) error {
+	fmt.Println("Here")
 	err := setup.SetContext(ctx)
 	if err != nil {
 		log.Fatalf("Could not initialize: %s", err.Error())
