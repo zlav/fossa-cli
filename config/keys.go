@@ -17,8 +17,7 @@ import (
 
 /**** Mock configuration values ****/
 var (
-	MockBranch      string
-	BackendEndpoint = "https://app.fossa.io"
+	MockBranch string
 )
 
 /**** Global configuration keys ****/
@@ -51,7 +50,7 @@ func APIKey() string {
 
 // Endpoint is the desired FOSSA backend endpoint.
 func Endpoint() string {
-	return TryStrings(StringFlag(flags.Endpoint), file.Server(), BackendEndpoint)
+	return TryStrings(StringFlag(flags.Endpoint), file.Server(), "https://app.fossa.io")
 }
 
 /**** Project configuration keys ****/
