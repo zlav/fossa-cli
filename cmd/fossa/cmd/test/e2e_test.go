@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/apex/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli"
 
@@ -83,17 +84,20 @@ func testCustomServer(locator string, c chan string) *httptest.Server {
 		case "/api/cli/organization":
 			newResp := fossa.Organization{OrganizationID: orgID}
 			request, _ := json.Marshal(newResp)
-			w.Write(request)
+			_, err := w.Write(request)
+			log.Debugf("error writing message: %s\n", err)
 			return
 		case "/api/cli/" + locator + "/latest_build":
 			newResp := fossa.Build{Task: taskStatus{Status: "SUCCEEDED"}}
 			request, _ := json.Marshal(newResp)
-			w.Write(request)
+			_, err := w.Write(request)
+			log.Debugf("error writing message: %s\n", err)
 			return
 		case "/api/cli/" + locator + "/issues":
 			newResp := fossa.Build{Task: taskStatus{Status: "SUCCEEDED"}}
 			request, _ := json.Marshal(newResp)
-			w.Write(request)
+			_, err := w.Write(request)
+			log.Debugf("error writing message: %s\n", err)
 			c <- "SUCCESS"
 			return
 		default:
@@ -109,12 +113,14 @@ func testGitServer(locator string, c chan string) *httptest.Server {
 		case "/api/cli/" + locator + "/latest_build":
 			newResp := fossa.Build{Task: taskStatus{Status: "SUCCEEDED"}}
 			request, _ := json.Marshal(newResp)
-			w.Write(request)
+			_, err := w.Write(request)
+			log.Debugf("error writing message: %s\n", err)
 			return
 		case "/api/cli/" + locator + "/issues":
 			newResp := fossa.Build{Task: taskStatus{Status: "SUCCEEDED"}}
 			request, _ := json.Marshal(newResp)
-			w.Write(request)
+			_, err := w.Write(request)
+			log.Debugf("error writing message: %s\n", err)
 			c <- "SUCCESS"
 			return
 		default:
