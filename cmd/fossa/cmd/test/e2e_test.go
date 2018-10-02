@@ -3,9 +3,11 @@ package test_test
 import (
 	"encoding/json"
 	"flag"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,14 +17,14 @@ import (
 	"github.com/fossas/fossa-cli/cmd/fossa/cmd/test"
 )
 
-const orgID = 3
+var orgID = rand.Intn(1000)
 
 // taskStatus is a struct that imitates the anonymous struct within fossa.Build
 type taskStatus struct {
 	Status string
 }
 
-var locatorTypes = []struct {
+var testConfigs = []struct {
 	fetcher string
 	project string
 	locator string
@@ -35,24 +37,47 @@ var locatorTypes = []struct {
 	{"git", "testRun", "git+testRun$1000"},
 }
 
+// This function tests how the cli's test command constructs a locator and sends a request to the desired endpoint.
+// Currently this function implements goroutines and channels to prevent test.Run() from logging fatal and killing
+// the process. In the future, once errors are handled more gracefully the test server can be broken out
+// into its own TestServer package for other commands to access.
 func TestTestRunLocators(t *testing.T) {
-	for _, locatorType := range locatorTypes {
+	for _, testConfig := range testConfigs {
 		c := make(chan string)
-		ts := testServer(locatorType.locator, c)
+		ts := testServer(testConfig.fetcher, testConfig.locator, c)
+		if ts == nil {
+			t.Fail()
+		}
 		defer ts.Close()
 
-		flagSet := testFlags(locatorType.fetcher, locatorType.project, ts.URL, 1000)
+		flagSet := testFlags(testConfig.fetcher, testConfig.project, ts.URL, 1000)
 		context := cli.NewContext(&cli.App{}, flagSet, &cli.Context{})
 
-		go test.Run(context)
+		go func() {
+			err := test.Run(context)
+			assert.NoError(t, err)
+		}()
+
 		msg := <-c
 		if msg != "SUCCESS" {
-			assert.Equal(t, locatorType.locator, msg)
+			assert.Equal(t, testConfig.locator, msg)
 		}
 	}
 }
 
-func testServer(locator string, c chan string) *httptest.Server {
+func testServer(fetcher, locator string, c chan string) *httptest.Server {
+	if fetcher == "custom" {
+		return testCustomServer(locator, c)
+	}
+
+	if fetcher == "git" {
+		return testGitServer(locator, c)
+	}
+
+	return nil
+}
+
+func testCustomServer(locator string, c chan string) *httptest.Server {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.EscapedPath() {
 		case "/api/cli/organization":
@@ -72,10 +97,30 @@ func testServer(locator string, c chan string) *httptest.Server {
 			c <- "SUCCESS"
 			return
 		default:
-			c <- r.URL.EscapedPath()
+			c <- locatorFromPath(r.URL.EscapedPath())
 		}
 	}))
+	return ts
+}
 
+func testGitServer(locator string, c chan string) *httptest.Server {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.EscapedPath() {
+		case "/api/cli/" + locator + "/latest_build":
+			newResp := fossa.Build{Task: taskStatus{Status: "SUCCEEDED"}}
+			request, _ := json.Marshal(newResp)
+			w.Write(request)
+			return
+		case "/api/cli/" + locator + "/issues":
+			newResp := fossa.Build{Task: taskStatus{Status: "SUCCEEDED"}}
+			request, _ := json.Marshal(newResp)
+			w.Write(request)
+			c <- "SUCCESS"
+			return
+		default:
+			c <- locatorFromPath(r.URL.EscapedPath())
+		}
+	}))
 	return ts
 }
 
@@ -87,4 +132,11 @@ func testFlags(fetcher, project, endpoint string, revision int) *flag.FlagSet {
 	flagSet.String("project", project, "")
 	flagSet.String("endpoint", endpoint, "")
 	return flagSet
+}
+
+func locatorFromPath(path string) string {
+	path = strings.TrimPrefix(path, "/api/cli/")
+	path = strings.TrimSuffix(path, "/latest_build")
+	path = strings.TrimSuffix(path, "/issues")
+	return path
 }
