@@ -35,17 +35,20 @@ func SetAPIKey(key string) *errors.Error {
 		return &errors.Error{
 			Code:    "E_MISSING_API_KEY",
 			Type:    errors.UserInput,
-			Message: "missing FOSSA API key",
+			Message: "A FOSSA API key is needed to run this command.",
 			Troubleshooting: `
 
-Try providing your API key by setting the $FOSSA_API_KEY environment variable.
+Running ` + "`fossa analyze`" + ` performs a dependency analysis and uploads the result to FOSSA.
+To run an analysis without uploading results, run ` + "`fossa analyze --output`." + `
+
+You can provide your API key by setting the $FOSSA_API_KEY environment variable.
 For example, try running:
 
-	FOSSA_API_KEY=your-api-key-here %s
+    FOSSA_API_KEY=your-api-key-here $command
 
 You can create an API key for your FOSSA account at:
 
-	<https://app.fossa.io/account/settings/integrations/api_tokens>
+    <https://app.fossa.io/account/settings/integrations/api_tokens>
 
 `,
 		}

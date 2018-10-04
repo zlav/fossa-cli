@@ -37,6 +37,11 @@ func Run(ctx *cli.Context) error {
 		log.Fatalf("Could not initialize: %s", err.Error())
 	}
 
+	err = fossa.SetAPIKey(config.APIKey())
+	if err != nil {
+		return err
+	}
+
 	modules, err := config.Modules()
 	if err != nil {
 		log.Fatalf("Could not parse modules: %s", err.Error())

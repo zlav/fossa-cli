@@ -1,6 +1,11 @@
 package errors
 
-import "github.com/pkg/errors"
+import (
+	"strings"
+
+	"github.com/fatih/color"
+	"github.com/pkg/errors"
+)
 
 // General errors.
 var (
@@ -18,6 +23,7 @@ const (
 )
 
 type Error struct {
+	ExitCode        int
 	Code            string
 	Type            Type
 	Causes          []error
@@ -26,22 +32,19 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return `Error: ` + e.Message + `
-TROUBLESHOOTING:
+	return color.HiRedString("ERROR: ") + e.Message + "\n\n" + strings.TrimSpace(e.Troubleshooting) + `
 
-` + e.Troubleshooting + `
+` + color.WhiteString("REPORTING A BUG:") + `
 
 Please try troubleshooting before filing a bug. If none of the suggestions work,
 you can file a bug at <https://github.com/fossas/fossa-cli/issues/new>.
 
 For additional support, ask the #cli channel at <https://slack.fossa.io>.
 
-CREATING AN ISSUE:
-
 Before creating an issue, please search GitHub issues for similar problems. When
 creating the issue, please attach the debug log located at:
 
-  /tmp/fossa-cli-debug-log
+    $log
 `
 }
 

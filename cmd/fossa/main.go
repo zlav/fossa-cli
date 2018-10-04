@@ -8,7 +8,9 @@ import (
 
 	"github.com/apex/log"
 	"github.com/fossas/fossa-cli/config"
+	"github.com/fossas/fossa-cli/errors"
 
+	"github.com/fossas/fossa-cli/cmd/fossa/display"
 	"github.com/fossas/fossa-cli/cmd/fossa/flags"
 	"github.com/fossas/fossa-cli/cmd/fossa/setup"
 	"github.com/fossas/fossa-cli/cmd/fossa/version"
@@ -22,6 +24,7 @@ import (
 	"github.com/fossas/fossa-cli/cmd/fossa/cmd/upload"
 )
 
+// App describes the main application.
 var App = cli.App{
 	Name:                 "fossa-cli",
 	Usage:                "Fast, portable and reliable dependency analysis (https://github.com/fossas/fossa-cli/)",
@@ -48,11 +51,11 @@ func main() {
 	err := App.Run(os.Args)
 	if err != nil {
 		switch e := err.(type) {
-		case *cli.ExitError:
-			os.Exit(e.ExitCode())
+		case *errors.Error:
+			display.Error(e.Error())
+			os.Exit(e.ExitCode)
 		default:
-			// TODO: port all log.Fatal to instead return an error.
-			log.Debugf("Error: %#v", err.Error())
+			log.Errorf("Error: %#v", err.Error())
 			os.Exit(1)
 		}
 	}
