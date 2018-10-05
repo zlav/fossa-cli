@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/urfave/cli"
 
-	"github.com/apex/log"
+	"github.com/fossas/fossa-cli/api/fossa"
 	"github.com/fossas/fossa-cli/config"
 	"github.com/fossas/fossa-cli/errors"
 
@@ -49,17 +49,27 @@ var App = cli.App{
 }
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+
+		}
+	}()
 	err := App.Run(os.Args)
 	if err != nil {
+		log.WithError(err).Error("fatal error")
 		switch e := err.(type) {
 		case *errors.Error:
 			display.Error(errors.Render(e.Error(), errors.MessageArgs{
 				Invocation: strings.Join(os.Args, " "),
 				LogFile:    display.File(),
 			}))
-			os.Exit(e.ExitCode)
+			if e.ExitCode != 0 {
+				os.Exit(e.ExitCode)
+			} else {
+				os.Exit(1)
+			}
 		default:
-			log.Errorf("Error: %#v", err.Error())
+			display.Error(Error(err))
 			os.Exit(1)
 		}
 	}
@@ -71,9 +81,11 @@ func Run(ctx *cli.Context) error {
 		return err
 	}
 
-	if config.APIKey() == "" && !ctx.Bool(analyze.ShowOutput) {
-		fmt.Printf("Incorrect Usage. FOSSA_API_KEY must be set as an environment variable or provided in .fossa.yml\n\n")
-		log.Fatalf("No API KEY provided")
+	if !ctx.Bool(analyze.ShowOutput) {
+		err = fossa.SetAPIKey(config.APIKey())
+		if err != nil {
+			return err
+		}
 	}
 
 	err = initc.Run(ctx)

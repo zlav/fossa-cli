@@ -81,7 +81,10 @@ func Handler(entry *log.Entry) error {
 	}
 
 	// Write entry to STDERR.
-	if entry.Level >= level {
+	// HACK: for error messages, let the top-level error handler do the
+	// STDERR logging.
+	// TODO(leo): roll our own logging subroutines (again).
+	if entry.Level >= level && entry.Level != log.ErrorLevel {
 		msg := ""
 		switch entry.Level {
 		case log.DebugLevel:

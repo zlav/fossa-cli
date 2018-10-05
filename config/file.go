@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"io/ioutil"
 	"strings"
 
@@ -10,7 +11,6 @@ import (
 
 	"github.com/fossas/fossa-cli/cmd/fossa/flags"
 	v1 "github.com/fossas/fossa-cli/config/file.v1"
-	"github.com/fossas/fossa-cli/errors"
 	"github.com/fossas/fossa-cli/files"
 	"github.com/fossas/fossa-cli/module"
 )
@@ -159,7 +159,7 @@ func WriteFile(modules []module.Module) error {
 }
 
 func UpdateFile(modules []module.Module) error {
-	return errors.ErrNotImplemented
+	return errors.New("not implemented")
 }
 
 func ExistsFile() (bool, error) {

@@ -1,7 +1,8 @@
 package v2
 
 import (
-	"github.com/fossas/fossa-cli/errors"
+	"errors"
+
 	"github.com/fossas/fossa-cli/module"
 )
 
@@ -20,5 +21,5 @@ type File struct {
 }
 
 func New(data []byte) (File, error) {
-	return File{}, errors.ErrNotImplemented
+	return File{}, errors.New("not implemented")
 }

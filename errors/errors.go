@@ -38,7 +38,7 @@ type Error struct {
 // See Render for a list of supported verbs.
 func (e *Error) Error() string {
 	instructions := "| " + strings.Join(strings.Split(e.Troubleshooting, "\n"), "\n| ")
-	return color.HiRedString("ERROR: ") + e.Message + "\n" + instructions + `
+	return color.HiRedString("ERROR:") + " " + e.Message + "\n" + instructions + `
 
 ` + color.HiWhiteString("REPORTING A BUG:") + `
 
