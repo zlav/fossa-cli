@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/urfave/cli"
 
@@ -52,7 +53,10 @@ func main() {
 	if err != nil {
 		switch e := err.(type) {
 		case *errors.Error:
-			display.Error(e.Error())
+			display.Error(errors.Render(e.Error(), errors.MessageArgs{
+				Invocation: strings.Join(os.Args, " "),
+				LogFile:    display.File(),
+			}))
 			os.Exit(e.ExitCode)
 		default:
 			log.Errorf("Error: %#v", err.Error())

@@ -5,6 +5,9 @@ package fossa
 import (
 	"net/url"
 
+	"github.com/mitchellh/go-wordwrap"
+
+	"github.com/fatih/color"
 	"github.com/fossas/fossa-cli/api"
 	"github.com/fossas/fossa-cli/errors"
 )
@@ -37,19 +40,17 @@ func SetAPIKey(key string) *errors.Error {
 			Type:    errors.UserInput,
 			Message: "A FOSSA API key is needed to run this command.",
 			Troubleshooting: `
+` + wordwrap.WrapString("Running `fossa analyze` performs a dependency analysis and uploads the result to FOSSA. To run an analysis without uploading results, run:", 78) + `
 
-Running ` + "`fossa analyze`" + ` performs a dependency analysis and uploads the result to FOSSA.
-To run an analysis without uploading results, run ` + "`fossa analyze --output`." + `
+    ` + color.HiGreenString("fossa analyze --output") + `
 
-You can provide your API key by setting the $FOSSA_API_KEY environment variable.
-For example, try running:
+` + wordwrap.WrapString("You can provide your API key by setting the $FOSSA_API_KEY environment variable. For example, try running:", 78) + `
 
-    FOSSA_API_KEY=your-api-key-here $command
+    ` + color.HiGreenString("FOSSA_API_KEY=<YOUR_API_KEY_HERE> $command") + `
 
-You can create an API key for your FOSSA account at:
+` + wordwrap.WrapString("You can create an API key for your FOSSA account at:", 78) + `
 
-    <https://app.fossa.io/account/settings/integrations/api_tokens>
-
+    ` + color.HiBlueString("https://app.fossa.io/account/settings/integrations/api_tokens") + `
 `,
 		}
 	}
