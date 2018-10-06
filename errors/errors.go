@@ -57,6 +57,7 @@ creating the issue, please attach the debug log located at:
 // MessageArgs are substituted within unfinished error messages.
 type MessageArgs struct {
 	Invocation string
+	Endpoint   string
 	LogFile    string
 }
 
@@ -80,6 +81,7 @@ func Render(msg string, a MessageArgs) string {
 		//   $command.WithFlag("--output").WithoutFlag("--endpoint").Cmd("test")
 		//
 		sections[i] = strings.Replace(sections[i], "$command", a.Invocation, -1)
+		sections[i] = strings.Replace(sections[i], "$endpoint", a.Endpoint, -1)
 		sections[i] = strings.Replace(sections[i], "$log", a.LogFile, -1)
 	}
 	return strings.Join(sections, "$")

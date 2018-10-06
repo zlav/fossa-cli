@@ -59,7 +59,7 @@ func Run(ctx *cli.Context) error {
 
 ` + wordwrap.WrapString("You can create an API key for your FOSSA account at:", 78) + `
 
-    ` + color.HiBlueString("https://app.fossa.io/account/settings/integrations/api_tokens") + `
+    ` + color.HiBlueString("$endpoint/account/settings/integrations/api_tokens") + `
 `,
 			}
 		default:

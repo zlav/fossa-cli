@@ -61,6 +61,7 @@ func main() {
 		case *errors.Error:
 			display.Error(errors.Render(e.Error(), errors.MessageArgs{
 				Invocation: strings.Join(os.Args, " "),
+				Endpoint:   config.Endpoint(),
 				LogFile:    display.File(),
 			}))
 			if e.ExitCode != 0 {
