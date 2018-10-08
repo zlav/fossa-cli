@@ -5,9 +5,9 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 
+	"github.com/apex/log"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/fossas/fossa-cli/analyzers"
@@ -28,20 +28,7 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	cloneableProjects := make([]fixtures.Project, len(projects))
-	for i, proj := range projects {
-		cloneableProjects[i] = proj.Project
-	}
-
-	err := fixtures.Clone(nodeAnalyzerFixtureDir, cloneableProjects)
-	if err != nil {
-		panic(err)
-	}
-
-	err = initializeProjects(nodeAnalyzerFixtureDir)
-	if err != nil {
-		panic(err)
-	}
+	fixtures.Initialize(nodeAnalyzerFixtureDir, projects, projectInitializer)
 
 	exitCode := m.Run()
 	defer os.Exit(exitCode)
@@ -65,24 +52,17 @@ func TestTestSetup(t *testing.T) {
 	assertProjectFixtureExists(t, "request")
 }
 
-func TestNodejsAnalsis(t *testing.T) {
+func TestNodejsAnalysis(t *testing.T) {
 	t.Parallel()
 	for _, project := range projects {
 		proj := project
 		t.Run("Analysis:"+proj.Name, func(t *testing.T) {
 			t.Parallel()
-			shouldAllowNpmErr := false
-			for _, arg := range proj.Args {
-				if arg == "allow-npm-err" {
-					shouldAllowNpmErr = true
-					break
-				}
-			}
 			module := module.Module{
 				Dir:         filepath.Join(nodeAnalyzerFixtureDir, proj.Name),
 				Type:        pkg.NodeJS,
 				Name:        proj.Name,
-				Options:     map[string]interface{}{"allow-npm-err": shouldAllowNpmErr},
+				Options:     proj.Options,
 				BuildTarget: filepath.Join(nodeAnalyzerFixtureDir, proj.Name, "package.json"),
 			}
 
@@ -155,57 +135,45 @@ func assertProjectFixtureExists(t *testing.T, name string) {
 	assert.True(t, exists, name+" did not have its node modules installed")
 }
 
-func initializeProjects(testDir string) error {
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(len(projects))
-
-	for _, project := range projects {
-		go func(proj NodejsProject) {
-			defer waitGroup.Done()
-
-			projectDir := filepath.Join(testDir, proj.Name)
-			println("initializing " + projectDir)
-			nodeModulesExist, err := files.ExistsFolder(projectDir, "node_modules")
-			if err != nil {
-				panic(err)
-			}
-
-			if nodeModulesExist {
-				println("node modules already exists for " + proj.Name + "skipping initialization")
-				return
-			}
-
-			_, errOut, err := exec.Run(exec.Cmd{
-				Name:    "npm",
-				Argv:    []string{"install", "--production"},
-				Dir:     projectDir,
-				WithEnv: proj.Env,
-				Command: "npm",
-			})
-			if err != nil {
-				println(errOut)
-				println("failed to run npm install on " + proj.Name)
-			}
-
-			// save time on local
-			ymlAlreadyExists, err := files.Exists(filepath.Join(projectDir, ".fossa.yml"))
-			if err != nil {
-				panic(err)
-			}
-			if ymlAlreadyExists {
-				return
-			}
-
-			// any key will work to prevent the "NEED KEY" error message
-			_, err = runfossa.Init(projectDir)
-			if err != nil {
-				println("failed to run fossa init on " + proj.Name)
-				println(err.Error())
-				panic(err)
-			}
-		}(project)
+func projectInitializer(proj fixtures.Project, projectDir string) error {
+	nodeModulesExist, err := files.ExistsFolder(projectDir, "node_modules")
+	if err != nil {
+		return err
 	}
-	waitGroup.Wait()
+
+	if nodeModulesExist {
+		log.Debug("node_modules already exists for " + proj.Name + "skipping initialization")
+		return nil
+	}
+
+	_, errOut, err := exec.Run(exec.Cmd{
+		Name:    "npm",
+		Argv:    []string{"install", "--production"},
+		Dir:     projectDir,
+		WithEnv: proj.Env,
+		Command: "npm",
+	})
+	if err != nil {
+		log.Error(errOut)
+		log.Error("failed to run npm install on " + proj.Name)
+		return err
+	}
+
+	ymlAlreadyExists, err := files.Exists(filepath.Join(projectDir, ".fossa.yml"))
+	if err != nil {
+		return err
+	}
+	if ymlAlreadyExists {
+		return nil
+	}
+
+	stdout, stderr, err := runfossa.Init(projectDir)
+	if err != nil {
+		log.Error("failed to run fossa init on " + proj.Name)
+		log.Error(stdout)
+		log.Error(stderr)
+		return err
+	}
 
 	return nil
 }
@@ -227,70 +195,47 @@ var projects = []NodejsProject{
 			"PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "1",
 		},
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "fakerjs",
-			URL:    "https://github.com/Marak/faker.js",
-			Commit: "3a4bb358614c1e1f5d73f4df45c13a1a7aa013d7",
-		},
-		Env: map[string]string{},
+	fixtures.Project{
+		Name:   "fakerjs",
+		URL:    "https://github.com/Marak/faker.js",
+		Commit: "3a4bb358614c1e1f5d73f4df45c13a1a7aa013d7",
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "fastify",
-			URL:    "https://github.com/fastify/fastify",
-			Commit: "1b16a4c5e381f9292d3ac2c327c3bda4bd277408",
-		},
-		Env: map[string]string{},
+	fixtures.Project{
+		Name:   "fastify",
+		URL:    "https://github.com/fastify/fastify",
+		Commit: "1b16a4c5e381f9292d3ac2c327c3bda4bd277408",
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "nest",
-			URL:    "https://github.com/nestjs/nest",
-			Commit: "ce498e86150f7de4a260f0c393d47ec4cc920ea1",
-		},
-		Env: map[string]string{},
+	fixtures.Project{
+		Name:   "nest",
+		URL:    "https://github.com/nestjs/nest",
+		Commit: "ce498e86150f7de4a260f0c393d47ec4cc920ea1",
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "ohm",
-			URL:    "https://github.com/harc/ohm",
-			Commit: "8202eff3723cfa26522134e7b003cf31ab5de445",
-		},
-		Env: map[string]string{},
+	fixtures.Project{
+		Name:   "ohm",
+		URL:    "https://github.com/harc/ohm",
+		Commit: "8202eff3723cfa26522134e7b003cf31ab5de445",
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "express",
-			URL:    "https://github.com/expressjs/express",
-			Commit: "b4eb1f59d39d801d7365c86b04500f16faeb0b1c",
-		},
-		Env: map[string]string{},
+	fixtures.Project{
+
+		Name:   "express",
+		URL:    "https://github.com/expressjs/express",
+		Commit: "b4eb1f59d39d801d7365c86b04500f16faeb0b1c",
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "standard",
-			URL:    "https://github.com/standard/standard",
-			Commit: "bc02256fa2c03632e657248483c55a752e63e724",
-		},
-		Env:  map[string]string{},
-		Args: []string{"--option", "allow-npm-err:true"},
+	fixtures.Project{
+		Name:    "standard",
+		URL:     "https://github.com/standard/standard",
+		Commit:  "bc02256fa2c03632e657248483c55a752e63e724",
+		Options: map[string]interface{}{"allow-npm-err": true},
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "sodium-encryption",
-			URL:    "https://github.com/mafintosh/sodium-encryption",
-			Commit: "42a7cba0f97718157e8c7a386ef94ba31e16837a",
-		},
-		Env: map[string]string{},
+	fixtures.Project{
+		Name:   "sodium-encryption",
+		URL:    "https://github.com/mafintosh/sodium-encryption",
+		Commit: "42a7cba0f97718157e8c7a386ef94ba31e16837a",
 	},
-	NodejsProject{
-		Project: fixtures.Project{
-			Name:   "request",
-			URL:    "https://github.com/request/request",
-			Commit: "8162961dfdb73dc35a5a4bfeefb858c2ed2ccbb7",
-		},
-		Env: map[string]string{},
+	fixtures.Project{
+		Name:   "request",
+		URL:    "https://github.com/request/request",
+		Commit: "8162961dfdb73dc35a5a4bfeefb858c2ed2ccbb7",
 	},
 }
 
