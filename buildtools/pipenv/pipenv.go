@@ -8,32 +8,30 @@ import (
 	"github.com/fossas/fossa-cli/pkg"
 )
 
-// TODO: Add fallback for Pipfile.Lock analysis in a situation where pipenv
-// Is not present on the machine running fossa analyze
-
-// DepTree is used to unmarshall the output from pipenv graph and store
-// a object representing the dependcey tree
-type DepTree struct {
+// dependency is used to unmarshall the output from pipenv graph and store
+// an object representing an imported dependency as well as its
+// child dependencies.
+type dependency struct {
 	Package      string `json:"package_name"`
 	Resolved     string `json:"installed_version"`
 	Target       string `json:"required_version"`
-	Dependencies []DepTree
+	Dependencies []dependency
 }
 
 // Deps returns the list of imports and associted package graph
-// using the output of pipenv graph --json-tree
+// using the output of pipenv graph --json-tree.
 func Deps() ([]pkg.Import, map[pkg.ID]pkg.Package, error) {
-	tree, err := getTree()
+	deps, err := getDependencies()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	imports := importsFromTree(tree)
-	graph := graphFromTree(tree)
+	imports := importsFromDependencies(deps)
+	graph := graphFromDependencies(deps)
 	return imports, graph, nil
 }
 
-func getTree() ([]DepTree, error) {
+func getDependencies() ([]dependency, error) {
 	out, _, err := exec.Run(exec.Cmd{
 		Name: "pipenv",
 		Argv: []string{"graph", "--json-tree"},
@@ -42,18 +40,17 @@ func getTree() ([]DepTree, error) {
 		return nil, errors.Wrap(err, "could not run `pipenv graph`")
 	}
 
-	// Parse output.
-	var tree []DepTree
-	err = json.Unmarshal([]byte(out), &tree)
+	var depList []dependency
+	err = json.Unmarshal([]byte(out), &depList)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not parse `pipenv graph --json-tree` output")
 	}
-	return tree, nil
+	return depList, nil
 }
 
-func importsFromTree(tree []DepTree) []pkg.Import {
+func importsFromDependencies(depList []dependency) []pkg.Import {
 	var imports []pkg.Import
-	for _, dep := range tree {
+	for _, dep := range depList {
 		imports = append(imports, pkg.Import{
 			Target: dep.Target,
 			Resolved: pkg.ID{
@@ -66,18 +63,29 @@ func importsFromTree(tree []DepTree) []pkg.Import {
 	return imports
 }
 
-func graphFromTree(tree []DepTree) map[pkg.ID]pkg.Package {
+func graphFromDependencies(depList []dependency) map[pkg.ID]pkg.Package {
 	graph := make(map[pkg.ID]pkg.Package)
-	for _, subtree := range tree {
-		flattenTree(graph, subtree)
+	for _, dep := range depList {
+		id := pkg.ID{
+			Type:     pkg.Python,
+			Name:     dep.Package,
+			Revision: dep.Resolved,
+		}
+
+		// Update map.
+		graph[id] = pkg.Package{
+			ID:      id,
+			Imports: packageImports(dep.Dependencies),
+		}
+
+		flattenDeepDependencies(graph, dep)
 	}
 
 	return graph
 }
 
-func flattenTree(graph map[pkg.ID]pkg.Package, tree DepTree) {
-	for _, dep := range tree.Dependencies {
-		// Construct ID.
+func flattenDeepDependencies(graph map[pkg.ID]pkg.Package, dep dependency) {
+	for _, dep := range dep.Dependencies {
 		id := pkg.ID{
 			Type:     pkg.Python,
 			Name:     dep.Package,
@@ -88,23 +96,27 @@ func flattenTree(graph map[pkg.ID]pkg.Package, tree DepTree) {
 		if ok {
 			continue
 		}
-		// Get direct imports.
-		var imports []pkg.Import
-		for _, i := range tree.Dependencies {
-			imports = append(imports, pkg.Import{
-				Resolved: pkg.ID{
-					Type:     pkg.Python,
-					Name:     i.Package,
-					Revision: i.Resolved,
-				},
-			})
-		}
+
 		// Update map.
 		graph[id] = pkg.Package{
 			ID:      id,
-			Imports: imports,
+			Imports: packageImports(dep.Dependencies),
 		}
 		// Recurse in imports.
-		flattenTree(graph, dep)
+		flattenDeepDependencies(graph, dep)
 	}
+}
+
+func packageImports(packageDeps []dependency) []pkg.Import {
+	var imports []pkg.Import
+	for _, i := range packageDeps {
+		imports = append(imports, pkg.Import{
+			Resolved: pkg.ID{
+				Type:     pkg.Python,
+				Name:     i.Package,
+				Revision: i.Resolved,
+			},
+		})
+	}
+	return imports
 }
