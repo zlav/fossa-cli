@@ -9,16 +9,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apex/log"
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/fossas/fossa-cli/buildtools/pip"
 	"github.com/fossas/fossa-cli/buildtools/pipenv"
-
 	"github.com/fossas/fossa-cli/exec"
 	"github.com/fossas/fossa-cli/graph"
 	"github.com/fossas/fossa-cli/module"
 	"github.com/fossas/fossa-cli/pkg"
+
+	"github.com/apex/log"
+	"github.com/mitchellh/mapstructure"
 )
 
 type Analyzer struct {
@@ -156,13 +155,13 @@ func (a *Analyzer) Analyze() (graph.Deps, error) {
 			Transitive: fromImports(imports),
 		}, nil
 	case "pipenv":
-		imports, err := pipenv.FromFile("Pipfile.Lock")
+		imports, transitive, err := pipenv.Deps()
 		if err != nil {
 			return graph.Deps{}, err
 		}
 		return graph.Deps{
 			Direct:     imports,
-			Transitive: fromImports(imports),
+			Transitive: transitive,
 		}, nil
 	case "requirements":
 		fallthrough
